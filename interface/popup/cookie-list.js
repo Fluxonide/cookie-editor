@@ -375,6 +375,119 @@ import { CookieHandlerPopup } from './cookieHandlerPopup.js';
         showCookiesForTab();
       });
 
+    // Save cookies functionality
+    document.getElementById('save-cookies').addEventListener('click', () => {
+      if (disableButtons) {
+        return;
+      }
+
+      setPageTitle('Cookie-Editor - Save Cookies');
+
+      disableButtons = true;
+      Animate.transitionPage(
+        containerCookie,
+        containerCookie.firstChild,
+        createHtmlFormSaveCookies(),
+        'left',
+        () => {
+          disableButtons = false;
+        },
+        optionHandler.getAnimationsEnabled()
+      );
+
+      document.getElementById('button-bar-default').classList.remove('active');
+      document.getElementById('button-bar-save').classList.add('active');
+      document.getElementById('save-name').focus();
+      return false;
+    });
+
+    document.getElementById('return-list-save').addEventListener('click', () => {
+      showCookiesForTab();
+    });
+
+    document.getElementById('confirm-save-cookies').addEventListener('click', () => {
+      const saveName = document.getElementById('save-name').value.trim();
+      const description = document.getElementById('save-description').value.trim();
+      
+      if (!saveName) {
+        sendNotification('Please enter a name for the cookie set');
+        return;
+      }
+
+      const buttonIcon = document.getElementById('confirm-save-cookies').querySelector('use');
+      if (buttonIcon.getAttribute('href') !== '../sprites/solid.svg#bookmark') {
+        return;
+      }
+
+      // Get current cookies
+      cookieHandler.getAllCookies(function (cookies) {
+        if (!cookies || cookies.length === 0) {
+          sendNotification('No cookies to save');
+          return;
+        }
+
+        // Save cookies using background script
+        browserDetector.getApi().runtime.sendMessage({
+          type: 'saveCookieSet',
+          params: {
+            name: saveName,
+            description: description,
+            cookies: cookies,
+            url: getCurrentTabUrl()
+          }
+        }, function(response) {
+          if (response && response.success) {
+            sendNotification(`Cookie set "${saveName}" saved successfully`);
+            buttonIcon.setAttribute('href', '../sprites/solid.svg#check');
+            setTimeout(() => {
+              buttonIcon.setAttribute('href', '../sprites/solid.svg#bookmark');
+              showCookiesForTab();
+            }, 1500);
+          } else {
+            sendNotification('Failed to save cookie set');
+          }
+        });
+      });
+    });
+
+    // Load cookies functionality
+    document.getElementById('load-cookies').addEventListener('click', () => {
+      if (disableButtons) {
+        return;
+      }
+
+      setPageTitle('Cookie-Editor - Load Cookies');
+
+      disableButtons = true;
+      
+      // Get saved cookie sets and create the load form
+      browserDetector.getApi().runtime.sendMessage({
+        type: 'getSavedCookieSets'
+      }, function(savedSets) {
+        const loadForm = createHtmlFormLoadCookies(savedSets || []);
+        
+        Animate.transitionPage(
+          containerCookie,
+          containerCookie.firstChild,
+          loadForm,
+          'left',
+          () => {
+            disableButtons = false;
+          },
+          optionHandler.getAnimationsEnabled()
+        );
+
+        document.getElementById('button-bar-default').classList.remove('active');
+        document.getElementById('button-bar-load').classList.add('active');
+      });
+
+      return false;
+    });
+
+    document.getElementById('return-list-load').addEventListener('click', () => {
+      showCookiesForTab();
+    });
+
     containerCookie.addEventListener('submit', e => {
       e.preventDefault();
       saveCookieForm(e.target);
@@ -570,6 +683,8 @@ import { CookieHandlerPopup } from './cookieHandlerPopup.js';
     setPageTitle('Cookie-Editor');
     document.getElementById('button-bar-add').classList.remove('active');
     document.getElementById('button-bar-import').classList.remove('active');
+    document.getElementById('button-bar-save').classList.remove('active');
+    document.getElementById('button-bar-load').classList.remove('active');
     document.getElementById('button-bar-default').classList.add('active');
     document.myThing = 'DarkSide';
     const domain = getDomainFromUrl(cookieHandler.currentTab.url);
@@ -845,6 +960,63 @@ import { CookieHandlerPopup } from './cookieHandlerPopup.js';
   }
 
   /**
+   * Creates the HTML form to allow saving cookies.
+   * @return {string} The HTML for the form.
+   */
+  function createHtmlFormSaveCookies() {
+    const template = document.importNode(
+      document.getElementById('tmp-save-cookies').content,
+      true
+    );
+    return template.querySelector('form');
+  }
+
+  /**
+   * Creates the HTML form to allow loading saved cookies.
+   * @param {Array} savedSets Array of saved cookie sets.
+   * @return {string} The HTML for the form.
+   */
+  function createHtmlFormLoadCookies(savedSets) {
+    const template = document.importNode(
+      document.getElementById('tmp-load-cookies').content,
+      true
+    );
+    const container = template.querySelector('.load-cookies');
+    const listContainer = container.querySelector('#saved-cookies-list');
+
+    if (!savedSets || savedSets.length === 0) {
+      listContainer.innerHTML = '<p>No saved cookie sets found.</p>';
+      return container;
+    }
+
+    savedSets.forEach(function(saveSet) {
+      const itemTemplate = document.importNode(
+        document.getElementById('tmp-saved-cookie-item').content,
+        true
+      );
+      const item = itemTemplate.querySelector('.saved-cookie-item');
+      
+      item.dataset.saveId = saveSet.id;
+      item.querySelector('.saved-cookie-name').textContent = saveSet.name;
+      item.querySelector('.saved-cookie-date').textContent = new Date(saveSet.savedAt).toLocaleDateString();
+      item.querySelector('.saved-cookie-description').textContent = saveSet.description || 'No description';
+
+      // Add event listeners for load and delete buttons
+      item.querySelector('.load-saved-cookies').addEventListener('click', function() {
+        loadSavedCookieSet(saveSet.id);
+      });
+
+      item.querySelector('.delete-saved-cookies').addEventListener('click', function() {
+        deleteSavedCookieSet(saveSet.id, item);
+      });
+
+      listContainer.appendChild(item);
+    });
+
+    return container;
+  }
+
+  /**
    * Handles the logic of the export button, depending on user preferences.
    */
   function handleExportButtonClick() {
@@ -998,6 +1170,129 @@ import { CookieHandlerPopup } from './cookieHandlerPopup.js';
         onCookiesChanged();
       }
     });
+  }
+
+  /**
+   * Loads a saved cookie set and applies it to the current tab.
+   * @param {string} saveId ID of the saved cookie set to load.
+   */
+  function loadSavedCookieSet(saveId) {
+    browserDetector.getApi().runtime.sendMessage({
+      type: 'loadCookieSet',
+      params: { saveId: saveId }
+    }, function(response) {
+      if (response && response.success) {
+        const cookieSet = response.cookieSet;
+        let deletedCount = 0;
+        let loadedCount = 0;
+        let errorCount = 0;
+
+        // First, get all existing cookies and delete them
+        cookieHandler.getAllCookies(function(existingCookies) {
+          if (existingCookies && existingCookies.length > 0) {
+            let deletionPromises = [];
+            
+            existingCookies.forEach(function(existingCookie) {
+              deletionPromises.push(new Promise((resolve) => {
+                cookieHandler.removeCookie(
+                  existingCookie.name,
+                  getCurrentTabUrl(),
+                  function() {
+                    deletedCount++;
+                    resolve();
+                  }
+                );
+              }));
+            });
+
+            // Wait for all cookies to be deleted, then load the saved ones
+            Promise.all(deletionPromises).then(() => {
+              console.log(`Deleted ${deletedCount} existing cookies`);
+              loadSavedCookies();
+            });
+          } else {
+            // No existing cookies, just load the saved ones
+            loadSavedCookies();
+          }
+
+          function loadSavedCookies() {
+            // Load the saved cookies
+            cookieSet.cookies.forEach(function(cookie) {
+              // Make sure we are using the right store ID
+              cookie.storeId = cookieHandler.currentTab.cookieStoreId;
+
+              if (cookie.sameSite && cookie.sameSite === 'unspecified') {
+                cookie.sameSite = null;
+              }
+
+              try {
+                cookieHandler.saveCookie(
+                  cookie,
+                  getCurrentTabUrl(),
+                  function (error, savedCookie) {
+                    if (error) {
+                      errorCount++;
+                      console.error('Failed to load cookie:', error);
+                    } else {
+                      loadedCount++;
+                    }
+
+                    // Check if all cookies have been processed
+                    if (loadedCount + errorCount === cookieSet.cookies.length) {
+                      if (errorCount > 0) {
+                        sendNotification(`Cleared ${deletedCount} cookies, loaded ${loadedCount} cookies, ${errorCount} failed`);
+                      } else {
+                        sendNotification(`Cleared ${deletedCount} cookies and loaded ${loadedCount} cookies from "${cookieSet.name}"`);
+                      }
+                      
+                      // Refresh the page to show the loaded cookies
+                      setTimeout(() => {
+                        if (browserDetector.getApi().tabs && browserDetector.getApi().tabs.reload) {
+                          browserDetector.getApi().tabs.reload(cookieHandler.currentTab.id);
+                        }
+                        showCookiesForTab();
+                      }, 1000);
+                    }
+                  }
+                );
+              } catch (error) {
+                errorCount++;
+                console.error('Failed to load cookie:', error);
+              }
+            });
+          }
+        });
+      } else {
+        sendNotification('Failed to load cookie set: ' + (response.error || 'Unknown error'));
+      }
+    });
+  }
+
+  /**
+   * Deletes a saved cookie set.
+   * @param {string} saveId ID of the saved cookie set to delete.
+   * @param {Element} itemElement The HTML element representing the saved cookie set.
+   */
+  function deleteSavedCookieSet(saveId, itemElement) {
+    if (confirm('Are you sure you want to delete this saved cookie set?')) {
+      browserDetector.getApi().runtime.sendMessage({
+        type: 'deleteSavedCookieSet',
+        params: { saveId: saveId }
+      }, function(response) {
+        if (response && response.success) {
+          itemElement.remove();
+          sendNotification('Cookie set deleted successfully');
+          
+          // Check if there are no more saved sets
+          const listContainer = document.getElementById('saved-cookies-list');
+          if (listContainer && listContainer.children.length === 0) {
+            listContainer.innerHTML = '<p>No saved cookie sets found.</p>';
+          }
+        } else {
+          sendNotification('Failed to delete cookie set');
+        }
+      });
+    }
   }
 
   /**

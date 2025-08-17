@@ -155,6 +155,58 @@ import { PermissionHandler } from './interface/lib/permissionHandler.js';
         });
         return true;
       }
+      case 'saveCookieSet': {
+        const { name, description, cookies, url } = request.params;
+        const saveId = Date.now().toString();
+        const saveData = {
+          id: saveId,
+          name: name,
+          description: description || '',
+          cookies: cookies,
+          url: url,
+          savedAt: new Date().toISOString()
+        };
+        
+        browserDetector.getApi().storage.local.get(['savedCookieSets'], function(result) {
+          const savedSets = result.savedCookieSets || {};
+          savedSets[saveId] = saveData;
+          browserDetector.getApi().storage.local.set({ savedCookieSets: savedSets }, function() {
+            sendResponse({ success: true, saveId: saveId });
+          });
+        });
+        return true;
+      }
+      case 'getSavedCookieSets': {
+        browserDetector.getApi().storage.local.get(['savedCookieSets'], function(result) {
+          const savedSets = result.savedCookieSets || {};
+          sendResponse(Object.values(savedSets));
+        });
+        return true;
+      }
+      case 'loadCookieSet': {
+        const { saveId } = request.params;
+        browserDetector.getApi().storage.local.get(['savedCookieSets'], function(result) {
+          const savedSets = result.savedCookieSets || {};
+          const cookieSet = savedSets[saveId];
+          if (cookieSet) {
+            sendResponse({ success: true, cookieSet: cookieSet });
+          } else {
+            sendResponse({ success: false, error: 'Cookie set not found' });
+          }
+        });
+        return true;
+      }
+      case 'deleteSavedCookieSet': {
+        const { saveId } = request.params;
+        browserDetector.getApi().storage.local.get(['savedCookieSets'], function(result) {
+          const savedSets = result.savedCookieSets || {};
+          delete savedSets[saveId];
+          browserDetector.getApi().storage.local.set({ savedCookieSets: savedSets }, function() {
+            sendResponse({ success: true });
+          });
+        });
+        return true;
+      }
     }
   }
 

@@ -104,6 +104,34 @@
             <div class="tooltip" role="tooltip">Export</div>
           </div>
         </button>
+        <div class="panel-section-footer-separator"></div>
+
+        <button
+          class="panel-section-footer-button"
+          id="save-cookies"
+          type="button"
+        >
+          <div>
+            <svg class="icon">
+              <use href="../sprites/solid.svg#bookmark"></use>
+            </svg>
+            <div class="tooltip" role="tooltip">Save</div>
+          </div>
+        </button>
+        <div class="panel-section-footer-separator"></div>
+
+        <button
+          class="panel-section-footer-button"
+          id="load-cookies"
+          type="button"
+        >
+          <div>
+            <svg class="icon">
+              <use href="../sprites/solid.svg#folder-open"></use>
+            </svg>
+            <div class="tooltip" role="tooltip">Load</div>
+          </div>
+        </button>
       </div>
     </div>
 
@@ -166,6 +194,54 @@
         </button>
       </div>
     </div>
+
+    <div class="panel button-bar" id="button-bar-save">
+      <div class="panel-section panel-section-footer">
+        <button
+          class="panel-section-footer-button"
+          id="return-list-save"
+          type="button"
+        >
+          <div>
+            <svg class="icon">
+              <use href="../sprites/solid.svg#arrow-left"></use>
+            </svg>
+            <div class="tooltip" role="tooltip">Cancel</div>
+          </div>
+        </button>
+        <div class="panel-section-footer-separator"></div>
+
+        <button
+          class="panel-section-footer-button primary"
+          id="confirm-save-cookies"
+          type="button"
+        >
+          <div>
+            <svg class="icon">
+              <use href="../sprites/solid.svg#bookmark"></use>
+            </svg>
+            <div class="tooltip" role="tooltip">Save</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <div class="panel button-bar" id="button-bar-load">
+      <div class="panel-section panel-section-footer">
+        <button
+          class="panel-section-footer-button"
+          id="return-list-load"
+          type="button"
+        >
+          <div>
+            <svg class="icon">
+              <use href="../sprites/solid.svg#arrow-left"></use>
+            </svg>
+            <div class="tooltip" role="tooltip">Cancel</div>
+          </div>
+        </button>
+      </div>
+    </div></svg>
 
     <div id="notification-container">
       <div id="notification">
@@ -417,6 +493,44 @@
         <div class="ad-actions">
           <button class="dont-show">Not interested</button>
           <button class="later">Later</button>
+        </div>
+      </div>
+    </template>
+
+    <template id="tmp-save-cookies">
+      <form class="form container save-cookies">
+        <div>
+          <label for="save-name">Save Name</label>
+          <input name="saveName" type="text" id="save-name" placeholder="Enter a name for this cookie set" />
+        </div>
+        <div>
+          <label for="save-description">Description (optional)</label>
+          <textarea name="description" id="save-description" placeholder="Optional description"></textarea>
+        </div>
+      </form>
+    </template>
+
+    <template id="tmp-load-cookies">
+      <div class="form container load-cookies">
+        <div>
+          <label>Saved Cookie Sets</label>
+          <div id="saved-cookies-list">
+            <!-- Saved cookie sets will be populated here -->
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template id="tmp-saved-cookie-item">
+      <div class="saved-cookie-item" data-save-id="">
+        <div class="saved-cookie-header">
+          <span class="saved-cookie-name"></span>
+          <span class="saved-cookie-date"></span>
+        </div>
+        <div class="saved-cookie-description"></div>
+        <div class="saved-cookie-actions">
+          <button class="load-saved-cookies" type="button">Load</button>
+          <button class="delete-saved-cookies danger" type="button">Delete</button>
         </div>
       </div>
     </template>

@@ -892,3 +892,120 @@ body,
   background-color: rgba(0, 0, 0, 0.03);
   box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.1);
 }
+
+/* Saved Cookie Items Styles */
+.saved-cookie-item {
+  border: 1px solid var(--primary-border-color);
+  border-radius: 5px;
+  margin-bottom: 10px;
+  padding: 12px;
+  background-color: var(--primary-surface-color);
+  transition: background-color 100ms linear;
+}
+
+.saved-cookie-item:hover {
+  background-color: var(--secondary-surface-color);
+}
+
+.saved-cookie-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.saved-cookie-name {
+  font-weight: bold;
+  font-size: 14px;
+  color: var(--primary-text-color);
+}
+
+.saved-cookie-date {
+  font-size: 11px;
+  color: var(--secondary-text-color);
+}
+
+.saved-cookie-description {
+  font-size: 12px;
+  color: var(--secondary-text-color);
+  margin-bottom: 10px;
+  font-style: italic;
+}
+
+.saved-cookie-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.saved-cookie-actions button {
+  padding: 6px 12px;
+  border: 1px solid var(--primary-border-color);
+  border-radius: 3px;
+  background-color: var(--primary-surface-color);
+  color: var(--primary-text-color);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 100ms linear;
+}
+
+.saved-cookie-actions button:hover {
+  background-color: var(--secondary-surface-color);
+  border-color: var(--primary-outline-color);
+}
+
+.saved-cookie-actions button:focus-visible {
+  outline: 2px solid var(--primary-outline-color);
+  border-radius: 4px;
+}
+
+.saved-cookie-actions button.danger {
+  color: var(--danger-text-color);
+  border-color: var(--danger-border-color);
+}
+
+.saved-cookie-actions button.danger:hover {
+  background-color: var(--danger-surface-color);
+}
+
+.load-cookies p {
+  text-align: center;
+  color: var(--secondary-text-color);
+  font-style: italic;
+  margin: 20px 0;
+}
+
+/* Save cookies form styles */
+.save-cookies input,
+.save-cookies textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--primary-border-color);
+  border-radius: 3px;
+  background-color: var(--primary-surface-color);
+  color: var(--primary-text-color);
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.save-cookies textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.save-cookies input:focus,
+.save-cookies textarea:focus {
+  outline: 2px solid var(--primary-outline-color);
+  border-color: var(--primary-outline-color);
+}
+
+.save-cookies label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: var(--primary-text-color);
+}
+
+.save-cookies > div {
+  margin-bottom: 15px;
+}
